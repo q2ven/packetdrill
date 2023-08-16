@@ -79,6 +79,13 @@ static int tcp_edo_option_to_string(FILE *s, struct tcp_option *option,
 	case TCPOLEN_EXP_EDO_SUP:
 		fputs("edoOK", s);
 		break;
+	case TCPOLEN_EXP_EDO_EXT_HDR:
+		fprintf(s, "edo %d", ntohs(option->data.edo.hdr));
+		break;
+	case TCPOLEN_EXP_EDO_EXT_SEG:
+		fprintf(s, "edo %d %d",	ntohs(option->data.edo.hdr),
+			ntohs(option->data.edo.seg));
+		break;
 	default:
 		asprintf(error, "unexpected TCP EDO option length: %u",
 			 option->length);

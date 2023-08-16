@@ -545,7 +545,7 @@ static struct packet *append_gre(struct packet *packet, struct expression *expr)
 %token <reserved> FD EVENTS REVENTS ONOFF LINGER
 %token <reserved> U32 U64 PTR
 %token <reserved> ACK ECR EOL MSS NOP SACK SACKOK TIMESTAMP VAL WIN WSCALE
-%token <reserved> URG MD5 FAST_OPEN FAST_OPEN_EXP EDOOK
+%token <reserved> URG MD5 FAST_OPEN FAST_OPEN_EXP EDO EDOOK
 %token <reserved> TOS FLAGS FLOWLABEL
 %token <reserved> ECT0 ECT1 CE ECT01 NO_ECN
 %token <reserved> IPV4 IPV6 ICMP UDP RAW GRE MTU ID
@@ -588,7 +588,7 @@ static struct packet *append_gre(struct packet *packet, struct expression *expr)
 %type <sequence_number> opt_ack
 %type <tcp_sequence_info> seq opt_icmp_echoed
 %type <tcp_options> opt_tcp_options tcp_option_list
-%type <tcp_option> tcp_option sack_block_list sack_block
+%type <tcp_option> tcp_option sack_block_list sack_block edo_length
 %type <string> function_name
 %type <expression_list> expression_list function_arguments
 %type <expression> expression binary_expression array sub_expr_list
@@ -1253,15 +1253,21 @@ opt_tcp_options
 
 tcp_option_list
 : tcp_option                       {
+	char *error = NULL;
 	$$ = tcp_options_new();
-	if (tcp_options_append($$, $1)) {
-		semantic_error("TCP option list too long");
+	if (tcp_options_append($$, $1, &error)) {
+		assert(error != NULL);
+		semantic_error(error);
+		free(error);
 	}
 }
 | tcp_option_list ',' tcp_option   {
+	char *error = NULL;
 	$$ = $1;
-	if (tcp_options_append($$, $3)) {
-		semantic_error("TCP option list too long");
+	if (tcp_options_append($$, $3, &error)) {
+		assert(error != NULL);
+		semantic_error(error);
+		free(error);
 	}
 }
 ;
@@ -1344,6 +1350,9 @@ tcp_option
 		free(error);
 	}
 }
+| EDO edo_length {
+	$$ = $2;
+}
 | EDOOK {
 	$$ = new_edo_option(TCPOLEN_EXP_EDO_SUP);
 }
@@ -1378,6 +1387,35 @@ sack_block
 	$$->data.sack.block[0].right = htonl($3);
 }
 ;
+
+edo_length
+: {
+	$$ = new_edo_option(TCPOLEN_EXP_EDO_EXT_SEG);
+	$$->data.edo.auto_hdr = true;
+	$$->data.edo.auto_seg = true;
+}
+| INTEGER {
+	$$ = new_edo_option(TCPOLEN_EXP_EDO_EXT_HDR);
+
+	if ($1 == -1)
+		$$->data.edo.auto_hdr = true;
+	else
+		$$->data.edo.hdr = htons($1);
+}
+| INTEGER INTEGER {
+	$$ = new_edo_option(TCPOLEN_EXP_EDO_EXT_SEG);
+
+	if ($1 == -1)
+		$$->data.edo.auto_hdr = true;
+	else
+		$$->data.edo.hdr = htons($1);
+
+	if ($2 == -1)
+		$$->data.edo.auto_seg = true;
+	else
+		$$->data.edo.seg = htons($2);
+};
+
 
 syscall_spec
 : opt_end_time function_name function_arguments '='

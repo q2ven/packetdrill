@@ -258,6 +258,7 @@ md5			return MD5;
 TS			return TIMESTAMP;
 FO			return FAST_OPEN;
 FOEXP			return FAST_OPEN_EXP;
+edo			return EDO;
 edoOK			return EDOOK;
 tos			return TOS;
 flowlabel		return FLOWLABEL;

@@ -54,11 +54,33 @@ struct tcp_option *tcp_option_new(u8 kind, u8 length)
 	return option;
 }
 
-int tcp_options_append(struct tcp_options *options,
-			       struct tcp_option *option)
+int tcp_options_append(struct tcp_options *options, struct tcp_option *option,
+		       char **error)
 {
-	if (options->length + option->length > options->max)
+	if (options->length + option->length > options->max) {
+		asprintf(error, "TCP option list too long");
 		return STATUS_ERR;
+	}
+
+	if (tcp_option_is_edo(option) &&
+	    option->length >= TCPOLEN_EXP_EDO_EXT_HDR) {
+		if (option->length != TCPOLEN_EXP_EDO_EXT_HDR &&
+		    option->length != TCPOLEN_EXP_EDO_EXT_SEG) {
+			asprintf(error, "TCP EDO invalid length");
+			return STATUS_ERR;
+		}
+
+		if (options->edo) {
+			asprintf(error, "TCP EDO set twice");
+			return STATUS_ERR;
+		}
+
+		/* 2 is of Kind and Length, struct edo does not have them. */
+		options->edo = (struct edo *)(options->data + options->length + 2);
+		options->auto_hdr = option->data.edo.auto_hdr;
+		options->auto_seg = option->data.edo.auto_seg;
+	}
+
 	memcpy(options->data + options->length, option, option->length);
 	options->length += option->length;
 	assert(options->length <= options->max);

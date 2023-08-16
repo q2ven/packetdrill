@@ -211,6 +211,15 @@ struct packet *new_tcp_packet(int address_family,
 	if (tcp_options == NULL) {
 		packet->flags |= FLAG_OPTIONS_NOCHECK;
 	} else if (tcp_options->length > 0) {
+		if (tcp_options->edo) {
+			if (tcp_options->auto_hdr)
+				tcp_options->edo->hdr = htons(tcp_header_bytes);
+
+			if (tcp_options->auto_seg)
+				tcp_options->edo->seg = htons(tcp_header_bytes +
+							      tcp_payload_bytes);
+		}
+
 		/* Copy TCP options into packet */
 		memcpy(tcp_option_start, tcp_options->data,
 		       tcp_options->length);

@@ -57,9 +57,17 @@
 
 #define TCPOPT_EDO_MAGIC	0x0ED0
 #define TCPOLEN_EXP_EDO_SUP	4
+#define TCPOLEN_EXP_EDO_EXT_HDR	6
+#define TCPOLEN_EXP_EDO_EXT_SEG	8
 
 struct edo {
 	u16 magic;	/* must be TCPOPT_EDO_MAGIC */
+	u16 hdr;
+	u16 seg;
+
+	/* Never inject this area, see tcp_options_append() */
+	bool auto_hdr;
+	bool auto_seg;
 };
 
 /* Represents a list of TCP options in their wire format. */
@@ -67,6 +75,10 @@ struct tcp_options {
 	u8 *data;		/* The options data, in wire format */
 	u8 max;			/* Max length, in bytes, of the data */
 	u8 length;		/* The length, in bytes, of the data */
+
+	struct edo *edo;
+	bool auto_hdr;
+	bool auto_seg;
 };
 
 /* Specification of a TCP SACK block (RFC 2018) */
@@ -127,7 +139,8 @@ extern struct tcp_option *tcp_option_new(u8 kind, u8 length);
  * error message.
  */
 extern int tcp_options_append(struct tcp_options *options,
-			      struct tcp_option *option);
+			      struct tcp_option *option,
+			      char **error);
 
 extern bool tcp_option_is_edo(struct tcp_option *option);
 
