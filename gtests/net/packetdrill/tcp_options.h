@@ -55,6 +55,13 @@
 #define MAX_TCP_FAST_OPEN_EXP_COOKIE_BYTES			\
 	(MAX_TCP_OPTION_BYTES - TCPOLEN_EXP_FASTOPEN_BASE)
 
+#define TCPOPT_EDO_MAGIC	0x0ED0
+#define TCPOLEN_EXP_EDO_SUP	4
+
+struct edo {
+	u16 magic;	/* must be TCPOPT_EDO_MAGIC */
+};
+
 /* Represents a list of TCP options in their wire format. */
 struct tcp_options {
 	u8 data[MAX_TCP_OPTION_BYTES];	/* The options data, in wire format */
@@ -104,6 +111,7 @@ struct tcp_option {
 			u16 magic;	/* must be TCPOPT_FASTOPEN_MAGIC */
 			u8 cookie[MAX_TCP_FAST_OPEN_EXP_COOKIE_BYTES];
 		} fast_open_exp;
+		struct edo edo;
 	} data;
 } __packed;
 
@@ -119,6 +127,8 @@ extern struct tcp_option *tcp_option_new(u8 kind, u8 length);
  */
 extern int tcp_options_append(struct tcp_options *options,
 			      struct tcp_option *option);
+
+extern bool tcp_option_is_edo(struct tcp_option *option);
 
 /* Calculate the number of SACK blocks in a SACK option of the given
  * length and store it in *num_blocks. Returns STATUS_OK on success;

@@ -72,6 +72,22 @@ static int tcp_fast_open_option_to_string(FILE *s, struct tcp_option *option,
 	return STATUS_OK;
 }
 
+static int tcp_edo_option_to_string(FILE *s, struct tcp_option *option,
+				    char **error)
+{
+	switch (option->length) {
+	case TCPOLEN_EXP_EDO_SUP:
+		fputs("edoOK", s);
+		break;
+	default:
+		asprintf(error, "unexpected TCP EDO option length: %u",
+			 option->length);
+		return STATUS_ERR;
+	}
+
+	return STATUS_OK;
+}
+
 int tcp_options_to_string(struct packet *packet,
 				  char **ascii_string, char **error)
 {
@@ -141,12 +157,17 @@ int tcp_options_to_string(struct packet *packet,
 			break;
 
 		case TCPOPT_EXP:
-			if (tcp_fast_open_option_to_string(s, option, true)) {
-				asprintf(error,
-					 "unknown experimental option");
-				goto out;
+			if (!tcp_fast_open_option_to_string(s, option, true))
+				break;
+
+			if (tcp_option_is_edo(option)) {
+				if (tcp_edo_option_to_string(s, option, error))
+					goto out;
+				break;
 			}
-			break;
+
+			asprintf(error, "unknown experimental option");
+			goto out;
 
 		default:
 			asprintf(error, "unexpected TCP option kind: %u",

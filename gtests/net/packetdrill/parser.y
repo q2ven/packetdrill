@@ -470,6 +470,15 @@ static struct tcp_option *new_md5_option(const char *digest_string,
 	return option;
 }
 
+static struct tcp_option *new_edo_option(int value)
+{
+	struct tcp_option *option = tcp_option_new(TCPOPT_EXP, value);
+
+	option->data.edo.magic = htons(TCPOPT_EDO_MAGIC);
+
+	return option;
+}
+
 static struct packet *append_gre(struct packet *packet, struct expression *expr)
 {
 	struct gre *gre = &expr->value.gre;
@@ -536,7 +545,7 @@ static struct packet *append_gre(struct packet *packet, struct expression *expr)
 %token <reserved> FD EVENTS REVENTS ONOFF LINGER
 %token <reserved> U32 U64 PTR
 %token <reserved> ACK ECR EOL MSS NOP SACK SACKOK TIMESTAMP VAL WIN WSCALE
-%token <reserved> URG MD5 FAST_OPEN FAST_OPEN_EXP
+%token <reserved> URG MD5 FAST_OPEN FAST_OPEN_EXP EDOOK
 %token <reserved> TOS FLAGS FLOWLABEL
 %token <reserved> ECT0 ECT1 CE ECT01 NO_ECN
 %token <reserved> IPV4 IPV6 ICMP UDP RAW GRE MTU ID
@@ -1332,6 +1341,9 @@ tcp_option
 		semantic_error(error);
 		free(error);
 	}
+}
+| EDOOK {
+	$$ = new_edo_option(TCPOLEN_EXP_EDO_SUP);
 }
 ;
 

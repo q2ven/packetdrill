@@ -53,6 +53,17 @@ int tcp_options_append(struct tcp_options *options,
 	return STATUS_OK;
 }
 
+bool tcp_option_is_edo(struct tcp_option *option)
+{
+	if (option->kind != TCPOPT_EXP)
+		return false;
+
+	if (option->length < TCPOLEN_EXP_EDO_SUP)
+		return false;
+
+	return ntohs(option->data.edo.magic) == TCPOPT_EDO_MAGIC;
+}
+
 int num_sack_blocks(u8 opt_len, int *num_blocks, char **error)
 {
 	if (opt_len <= 2) {
