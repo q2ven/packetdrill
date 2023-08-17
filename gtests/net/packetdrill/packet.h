@@ -111,6 +111,7 @@ struct packet {
 	__be32 *tcp_ts_val;	/* location of TCP timestamp val, or NULL */
 	__be32 *tcp_ts_ecr;	/* location of TCP timestamp ecr, or NULL */
 	int	mss;
+	u16	edo_hdr;
 };
 
 /* A simple list of packets. */
@@ -251,7 +252,7 @@ static inline int layer4_header_len(int protocol)
 static inline int packet_tcp_header_len(const struct packet *packet)
 {
 	assert(packet->tcp);
-	return packet->tcp->doff * sizeof(u32);
+	return packet->edo_hdr ?: packet->tcp->doff * sizeof(u32);
 }
 
 /* Return the length of the UDP header. */

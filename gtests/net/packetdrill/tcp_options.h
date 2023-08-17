@@ -73,8 +73,8 @@ struct edo {
 /* Represents a list of TCP options in their wire format. */
 struct tcp_options {
 	u8 *data;		/* The options data, in wire format */
-	u8 max;			/* Max length, in bytes, of the data */
-	u8 length;		/* The length, in bytes, of the data */
+	u16 max;		/* Max length, in bytes, of the data */
+	u16 length;		/* The length, in bytes, of the data */
 
 	struct edo *edo;
 	bool auto_hdr;

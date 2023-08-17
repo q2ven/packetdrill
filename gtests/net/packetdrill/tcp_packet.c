@@ -87,6 +87,21 @@ static inline int tcp_flag_ace_count(const char *flags)
 	return 0;
 }
 
+static inline int tcp_edo_doff(const struct tcp_options *tcp_options,
+			       int tcp_header_bytes)
+{
+	if (tcp_options && tcp_options->edo) {
+		u8 *edo = (u8 *)tcp_options->edo;
+		u8 edo_length;
+		u8 *edo_tail;
+
+		edo_length = *(edo - 1);
+		edo_tail = edo - 2 + edo_length;
+		tcp_header_bytes = sizeof(struct tcp) + (edo_tail - tcp_options->data);
+	}
+
+	return tcp_header_bytes >> 2;
+}
 
 struct packet *new_tcp_packet(int address_family,
 			       enum direction_t direction,
@@ -131,7 +146,8 @@ struct packet *new_tcp_packet(int address_family,
 	assert((tcp_header_bytes & 0x3) == 0);
 	assert((ip_header_bytes & 0x3) == 0);
 
-	if (tcp_header_bytes > MAX_TCP_HEADER_BYTES) {
+	if (tcp_header_bytes > MAX_TCP_HEADER_BYTES &&
+	    (!tcp_options || !tcp_options->edo)) {
 		asprintf(error, "TCP header too large");
 		return NULL;
 	}
@@ -169,7 +185,8 @@ struct packet *new_tcp_packet(int address_family,
 	packet->tcp->dst_port = htons(dst_port);
 	packet->tcp->seq = htonl(start_sequence);
 	packet->tcp->ack_seq = htonl(ack_sequence);
-	packet->tcp->doff = tcp_header_bytes / 4;
+	packet->tcp->doff = tcp_edo_doff(tcp_options, tcp_header_bytes);
+
 	if (window == -1) {
 		if (direction == DIRECTION_INBOUND) {
 			asprintf(error, "window must be specified"
@@ -218,6 +235,8 @@ struct packet *new_tcp_packet(int address_family,
 			if (tcp_options->auto_seg)
 				tcp_options->edo->seg = htons(tcp_header_bytes +
 							      tcp_payload_bytes);
+
+			packet->edo_hdr = ntohs(tcp_options->edo->hdr);
 		}
 
 		/* Copy TCP options into packet */

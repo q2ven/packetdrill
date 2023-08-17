@@ -57,9 +57,30 @@ struct tcp_option *tcp_option_new(u8 kind, u8 length)
 int tcp_options_append(struct tcp_options *options, struct tcp_option *option,
 		       char **error)
 {
-	if (options->length + option->length > options->max) {
-		asprintf(error, "TCP option list too long");
-		return STATUS_ERR;
+	int total_length = options->length + option->length;
+
+	if (total_length > options->max) {
+		u8 *old_data = options->data;
+
+		if (!options->edo ||
+		    total_length > UINT16_MAX - sizeof(struct tcphdr)) {
+			asprintf(error, "TCP option list too long");
+			return STATUS_ERR;
+		}
+
+		options->max *= 2;
+		if (options->max > UINT16_MAX)
+			options->max = UINT16_MAX;
+
+		options->data = calloc(1, options->max);
+		if (!options->data) {
+			asprintf(error, "Out of memory for TCP option list");
+			return STATUS_ERR;
+		}
+
+		options->edo = offset_ptr(old_data, options->data, options->edo);
+		memcpy(options->data, old_data, options->length);
+		free(old_data);
 	}
 
 	if (tcp_option_is_edo(option) &&
@@ -82,7 +103,7 @@ int tcp_options_append(struct tcp_options *options, struct tcp_option *option,
 	}
 
 	memcpy(options->data + options->length, option, option->length);
-	options->length += option->length;
+	options->length = total_length;
 	assert(options->length <= options->max);
 	free(option);
 	return STATUS_OK;
