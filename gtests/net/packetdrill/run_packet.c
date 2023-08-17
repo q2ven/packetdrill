@@ -859,7 +859,8 @@ static int verify_outbound_live_ttl_or_hl(u8 actual_ttl_byte,
 static int tcp_options_allowance(const struct packet *actual_packet,
 				 const struct packet *script_packet)
 {
-	if (script_packet->flags & FLAG_OPTIONS_NOCHECK)
+	if (script_packet->flags &
+	    (FLAG_OPTIONS_NOCHECK | FLAG_TOTLEN_NOCHECK))
 		return packet_tcp_options_len(actual_packet);
 	else
 		return 0;
@@ -948,6 +949,26 @@ static int verify_ipv6(
 	return STATUS_OK;
 }
 
+static int verify_tcp_data_offset(const struct packet *actual_packet,
+				  const struct packet *script_packet,
+				  const struct tcp *actual_tcp,
+				  const struct tcp *script_tcp,
+				  char **error)
+{
+	unsigned int optlen = 0;
+
+	if (script_packet->flags & FLAG_OPTIONS_NOCHECK) {
+		if (actual_packet->edo_hdr)
+			return STATUS_OK;
+
+		optlen = packet_tcp_options_len(actual_packet);
+	}
+
+	return check_field("tcp_data_offset",
+			   script_tcp->doff + optlen / sizeof(u32),
+			   actual_tcp->doff, error);
+}
+
 /* Verify that required actual TCP header fields are as the script expected. */
 static int verify_tcp(
 	const struct packet *actual_packet,
@@ -958,11 +979,8 @@ static int verify_tcp(
 	const struct tcp *script_tcp = script_packet->headers[layer].h.tcp;
 	int script_payload_len = packet_payload_len(script_packet);
 
-	if (check_field("tcp_data_offset",
-			(script_tcp->doff +
-			 tcp_options_allowance(actual_packet,
-					       script_packet)/sizeof(u32)),
-			actual_tcp->doff, error) ||
+	if (verify_tcp_data_offset(actual_packet, script_packet,
+				   actual_tcp, script_tcp, error) ||
 	    (strict && check_field("tcp_fin",
 			script_tcp->fin,
 			actual_tcp->fin, error)) ||

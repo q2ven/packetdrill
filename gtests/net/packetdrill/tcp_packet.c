@@ -229,8 +229,10 @@ struct packet *new_tcp_packet(int address_family,
 		packet->flags |= FLAG_OPTIONS_NOCHECK;
 	} else if (tcp_options->length > 0) {
 		if (tcp_options->edo) {
-			if (tcp_options->auto_hdr)
+			if (tcp_options->auto_hdr) {
 				tcp_options->edo->hdr = htons(tcp_header_bytes);
+				packet->flags |= FLAG_TOTLEN_NOCHECK;
+			}
 
 			if (tcp_options->auto_seg)
 				tcp_options->edo->seg = htons(tcp_header_bytes +

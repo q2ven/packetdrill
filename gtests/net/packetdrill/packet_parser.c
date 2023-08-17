@@ -43,6 +43,7 @@
 #include "logging.h"
 #include "packet.h"
 #include "tcp.h"
+#include "tcp_options_iterator.h"
 
 static int parse_ipv4(struct packet *packet, u8 *header_start, u8 *packet_end,
 		      char **error);
@@ -353,6 +354,42 @@ error_out:
 	return PACKET_BAD;
 }
 
+static int parse_tcp_edo_extension(struct packet *packet, int layer4_bytes, char **error)
+{
+	struct tcp_options_iterator iter;
+	struct tcp_option *option;
+
+	for (option = tcp_options_begin(packet, &iter); option;
+	     option = tcp_options_next(&iter, error))
+		if (tcp_option_is_edo(option) &&
+		    option->length >= TCPOLEN_EXP_EDO_EXT_HDR)
+			break;
+
+	if (!option)
+		return PACKET_OK;
+
+	switch (option->length) {
+	case TCPOLEN_EXP_EDO_EXT_SEG:
+		if (ntohs(option->data.edo.seg) != layer4_bytes) {
+			asprintf(error, "TCP EDO Extension Segment Length is invalid");
+			return PACKET_BAD;
+		}
+	case TCPOLEN_EXP_EDO_EXT_HDR:
+		if (ntohs(option->data.edo.hdr) > layer4_bytes) {
+			asprintf(error, "TCP EDO Extension Header Length is invalid");
+			return PACKET_BAD;
+		}
+
+		packet->edo_hdr = ntohs(option->data.edo.hdr);
+		break;
+	default:
+		asprintf(error, "TCP EDO Extension Length is invalid: %u", option->length);
+		return PACKET_BAD;
+	}
+
+	return PACKET_OK;
+}
+
 /* Parse the TCP header. Return a packet_parse_result_t. */
 static int parse_tcp(struct packet *packet, u8 *layer4_start, int layer4_bytes,
 		     u8 *packet_end, char **error)
@@ -375,6 +412,8 @@ static int parse_tcp(struct packet *packet, u8 *layer4_start, int layer4_bytes,
 		asprintf(error, "TCP data offset too big");
 		goto error_out;
 	}
+	if (parse_tcp_edo_extension(packet, layer4_bytes, error))
+		goto error_out;
 
 	tcp_header = packet_append_header(packet, HEADER_TCP, tcp_header_len);
 	if (tcp_header == NULL) {
