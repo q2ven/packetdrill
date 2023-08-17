@@ -30,7 +30,20 @@
 
 struct tcp_options *tcp_options_new(void)
 {
-	return calloc(1, sizeof(struct tcp_options));
+	struct tcp_options *options = calloc(1, sizeof(struct tcp_options));
+
+	if (!options)
+		return NULL;
+
+	options->data = calloc(1, sizeof(u8) * MAX_TCP_OPTION_BYTES);
+	if (!options->data) {
+		free(options);
+		return NULL;
+	}
+
+	options->max = MAX_TCP_OPTION_BYTES;
+
+	return options;
 }
 
 struct tcp_option *tcp_option_new(u8 kind, u8 length)
@@ -44,11 +57,11 @@ struct tcp_option *tcp_option_new(u8 kind, u8 length)
 int tcp_options_append(struct tcp_options *options,
 			       struct tcp_option *option)
 {
-	if (options->length + option->length > sizeof(options->data))
+	if (options->length + option->length > options->max)
 		return STATUS_ERR;
 	memcpy(options->data + options->length, option, option->length);
 	options->length += option->length;
-	assert(options->length <= sizeof(options->data));
+	assert(options->length <= options->max);
 	free(option);
 	return STATUS_OK;
 }

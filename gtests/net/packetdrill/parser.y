@@ -814,6 +814,8 @@ tcp_packet_spec
 			       $5.start_sequence, $5.payload_bytes,
 			       $6, $7, $8, $9, &error);
 	free($4);
+	if ($9)
+		free($9->data);
 	free($9);
 	if (inner == NULL) {
 		assert(error != NULL);
