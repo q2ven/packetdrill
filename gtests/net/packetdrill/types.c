@@ -64,3 +64,10 @@ char *to_printable_string(const char *in, int in_len)
 	out[j] = 0;
 	return out;
 }
+
+void *offset_ptr(u8 *old_base, u8* new_base, void *old_ptr)
+{
+	u8 *old = (u8*)old_ptr;
+
+	return (old == NULL) ? NULL : (new_base + (old - old_base));
+}

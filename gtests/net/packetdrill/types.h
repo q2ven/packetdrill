@@ -174,6 +174,8 @@ extern void hex_dump(const u8 *buffer, int bytes, char **hex);
  * with non-printable bytes replaced by \xAB hex escape codes.
  */
 extern char *to_printable_string(const char *in, int in_len);
+/* Return a pointer to a packet offset mapped from an old base to a new base. */
+extern void *offset_ptr(u8 *old_base, u8* new_base, void *old_ptr);
 
 static inline bool is_valid_u8(s64 x)
 {

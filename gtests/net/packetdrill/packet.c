@@ -142,14 +142,6 @@ struct header *packet_append_header(struct packet *packet,
 	return header;
 }
 
-/* Map a pointer to a packet offset from an old base to a new base. */
-static void *offset_ptr(u8 *old_base, u8* new_base, void *old_ptr)
-{
-	u8 *old = (u8*)old_ptr;
-
-	return (old == NULL) ? NULL : (new_base + (old - old_base));
-}
-
 static void packet_duplicate_info(struct packet *packet,
 				  struct packet *old_packet,
 				  int bytes_headroom,
