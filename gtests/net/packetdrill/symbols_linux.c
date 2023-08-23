@@ -193,9 +193,12 @@ struct int_symbol platform_symbols_table[] = {
 	{ TCP_TIMESTAMP,                    "TCP_TIMESTAMP"                   },
 	{ TCP_NOTSENT_LOWAT,                "TCP_NOTSENT_LOWAT"               },
 	{ TCP_INQ,			    "TCP_INQ"			      },
+	{ TCP_EXT_DATA_OFFSET,		    "TCP_EXT_DATA_OFFSET"	      },
 
 	{ TCP_CM_INQ,			    "TCP_CM_INQ"		      },
 	{ TCP_TX_DELAY,			    "TCP_TX_DELAY"		      },
+	{ TCP_EDO_HDR,			    "TCP_EDO_HDR"		      },
+	{ TCP_EDO_HDR_SEG,		    "TCP_EDO_HDR_SEG"		      },
 
 	{ O_RDONLY,                         "O_RDONLY"                        },
 	{ O_WRONLY,                         "O_WRONLY"                        },

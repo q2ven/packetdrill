@@ -63,6 +63,7 @@
 #define TCP_FASTOPEN_CONNECT     30  /* Attempt FastOpen with connect */
 #define TCP_FASTOPEN_KEY         33  /* Set the key for Fast Open (cookie) */
 #define TCP_FASTOPEN_NO_COOKIE   34  /* Enable TFO without a TFO cookie */
+#define TCP_EXT_DATA_OFFSET      44  /* Enable Extended Data Offset */
 
 #ifndef TCP_INQ
 #define TCP_INQ			 36
@@ -70,6 +71,9 @@
 #endif
 
 #define TCP_TX_DELAY		 37
+
+#define TCP_EDO_HDR              1
+#define TCP_EDO_HDR_SEG          2
 
 /* TODO: remove these when netinet/tcp.h has them */
 #ifndef TCPI_OPT_ECN_SEEN
