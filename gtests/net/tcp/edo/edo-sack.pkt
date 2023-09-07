@@ -1,0 +1,31 @@
+// enforce strict segment checking to check EDO and SACK
+--strict_segments
+
+`../common/defaults.sh`
+
+0  socket(..., SOCK_STREAM, IPPROTO_TCP) = 3
++0 fcntl(3, F_SETFL, O_RDWR|O_NONBLOCK) = 0
++0 setsockopt(3, SOL_TCP, TCP_EXT_DATA_OFFSET, [TCP_EDO_HDR_SEG], 4) = 0
++0 connect(3, ..., ...) = -1 EINPROGRESS (Operation now in progress)
+
++0 > S  0:0(0) <edoOK,mss 1460,sackOK,TS val 1000 ecr 0,nop,wscale 8>
++0 < S. 0:0(0) ack 1 win 65535 <nop,nop,edoOK,mss 9000,sackOK>
++0 > .  1:1(0) ack 1 <edo 28 28>
+
++0 < .  12:13(1) ack 1 win 65535 <edo 28 29>
++0 > .  1:1(0) ack 1 <edo 40 40,nop,nop,sack 12:13>
+
++0 < .  10:11(1) ack 1 win 65535 <edo 28 29>
++0 > .  1:1(0) ack 1 <edo 48 48,nop,nop,sack 10:11 12:13>
+
++0 < .  8:9(1) ack 1 win 65535 <edo 28 29>
++0 > .  1:1(0) ack 1 <edo 56 56,nop,nop,sack 8:9 10:11 12:13>
+
++0 < .  6:7(1) ack 1 win 65535 <edo 28 29>
++0 > .  1:1(0) ack 1 <edo 64 64,nop,nop,sack 6:7 8:9 10:11 12:13>
+
++0 < .  4:5(1) ack 1 win 65535 <edo 28 29>
++0 > .  1:1(0) ack 1 <edo 64 64,nop,nop,sack 4:5 6:7 8:9 10:11>
+
++0 < .  2:3(1) ack 1 win 65535 <edo 28 29>
++0 > .  1:1(0) ack 1 <edo 64 64,nop,nop,sack 2:3 4:5 6:7 8:9>
