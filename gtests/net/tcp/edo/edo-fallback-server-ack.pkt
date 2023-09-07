@@ -1,0 +1,18 @@
+`../common/defaults.sh`
+
+0  socket(..., SOCK_STREAM, IPPROTO_TCP) = 3
++0 setsockopt(3, SOL_TCP, TCP_EXT_DATA_OFFSET, [TCP_EDO_HDR_SEG], 4) = 0
++0 bind(3, ..., ...) = 0
++0 listen(3, 1) = 0
+
+// EDO Supported has been negotiated
++0 < S  0:0(0) win 1000 <edoOK,mss 1000>
++0 > S. 0:0(0) ack 1 <edoOK,mss 1460>
+
+// No EDO Extension, fall back to non-EDO
++0 < .  1:1(0) ack 1 win 1000
+
++0 accept(3, ..., ...) = 4
++0 write(4, ..., 1000) = 1000
+
++0 > P. 1:1001(1000) ack 1
