@@ -1,0 +1,12 @@
+`../common/defaults.sh`
+
+0 socket(..., SOCK_STREAM, IPPROTO_TCP) = 3
++0 fcntl(3, F_SETFL, O_RDWR|O_NONBLOCK) = 0
++0 setsockopt(3, SOL_TCP, TCP_EXT_DATA_OFFSET, [TCP_EDO_HDR_SEG], 4) = 0
++0 connect(3, ..., ...) = -1 EINPROGRESS (Operation now in progress)
+
++0 > S  0:0(0) <edoOK,mss 1460,sackOK,TS val 1000 ecr 0,nop,wscale 8>
+
+// No EDO Extension, fall back to non-EDO
++0 < S  0:0(0) win 1000 <mss 1000>
++0 > S. 0:0(0) ack 1 <mss 1460,sackOK,TS val 3308134035 ecr 0,nop,wscale 8>
